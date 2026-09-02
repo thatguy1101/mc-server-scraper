@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "mc.mod.serverscraper.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MixinWorldTimeUpdateS2CPacket",
+    "MixinClientBrandCustomPayload",
+    "MixinClientConnection",
+    "MixinGameJoinS2CPacket",
+    "MixinDisconnect",
+    "MixinTitleS2CPacket",
+    "MixinResourcePackSend",
+    "MixinPlayerRespawn"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

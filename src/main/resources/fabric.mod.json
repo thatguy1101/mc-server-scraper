@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "serverscraper",
+  "version": "${version}",
+  "name": "ServerScraper",
+  "description": "A client-side mod that scrapes and displays detailed information about any server you join — players, world, network, chunks, gamerules, and much more.",
+  "authors": [
+    "Max_W"
+  ],
+  "contact": {
+    "sources": "https://github.com/Max_W/ServerScraper"
+  },
+  "license": "MIT",
+  "icon": "assets/serverscraper/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+      "mc.mod.serverscraper.client.ServerscraperDataGenerator"
+    ],
+    "client": [
+      "mc.mod.serverscraper.client.ServerscraperClient"
+    ],
+    "main": [
+      "mc.mod.serverscraper.Serverscraper"
+    ]
+  },
+  "mixins": [
+    "serverscraper.mixins.json",
+    {
+      "config": "serverscraper.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

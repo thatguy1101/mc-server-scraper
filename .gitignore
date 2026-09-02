@@ -1,0 +1,37 @@
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.class
+
+# Fabric / Minecraft dev
+run/
+.loom/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & exports that the mod generates at runtime (contain server data)
+logs/
+scraper_exports/
+*.scrape.json
+*.scrape.txt
+*.scrape.csv
+
+# Secrets / credentials (never commit these)
+secrets.json
+config/serverscraper_auth.json
+
+# Java
+hs_err_pid*.log
+replay_pid*.log
