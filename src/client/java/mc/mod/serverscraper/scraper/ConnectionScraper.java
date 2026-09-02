@@ -1,16 +1,17 @@
 package mc.mod.serverscraper.scraper;
 
-import mc.mod.serverscraper.data.ServerInfo;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ServerInfo;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import mc.mod.serverscraper.data.ServerInfo;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.SharedConstants;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 
 /**
  * Scrapes connection-level data: IP, port, brand, version, ping, online-mode.
@@ -20,7 +21,7 @@ public class ConnectionScraper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("ServerScraper/Connection");
 
-    public static void scrape(mc.mod.serverscraper.data.ServerInfo info) {
+    public static void scrape(ServerInfo info) {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc == null) return;
 
@@ -42,23 +43,29 @@ public class ConnectionScraper {
         // ── Server list entry (address as typed, version string) ──────────────
         net.minecraft.client.network.ServerInfo serverListEntry = mc.getCurrentServerEntry();
         if (serverListEntry != null) {
-            info.serverAddress   = serverListEntry.address;
-            info.serverVersion   = serverListEntry.version != null
+            info.serverAddress = serverListEntry.address;
+            info.serverVersion = serverListEntry.version != null
                     ? serverListEntry.version.getString()
                     : "N/A";
-            info.isOnlineMode    = !serverListEntry.isLocal();
-            info.isLanServer     = serverListEntry.isLocal();
-            info.pingMs          = (int) serverListEntry.ping;
+            info.isOnlineMode  = !serverListEntry.isLocal();
+            info.isLanServer   = serverListEntry.isLocal();
+            info.pingMs        = (int) serverListEntry.ping;
         }
 
         // ── Protocol version ──────────────────────────────────────────────────
-        if (handler.getConnection().channel() != null) {
-            info.protocolVersion = net.minecraft.SharedConstants.getGameVersion().getProtocolVersion();
+        // isOpen() replaces channel() null-check; protocolVersion() replaces getProtocolVersion()
+        if (handler.getConnection().isOpen()) {
+            try {
+                // In yarn 1.21.11, GameVersion uses protocolVersion() not getProtocolVersion()
+                info.protocolVersion = SharedConstants.getGameVersion().protocolVersion();
+            } catch (Exception e) {
+                info.protocolVersion = 0;
+            }
         }
 
         // ── Online mode heuristic ─────────────────────────────────────────────
         if (info.isSinglePlayer) {
-            info.isOnlineMode = false;
+            info.isOnlineMode  = false;
             info.serverAddress = "Singleplayer";
             info.resolvedIp    = "127.0.0.1";
             info.serverPort    = -1;
@@ -66,7 +73,7 @@ public class ConnectionScraper {
     }
 
     /** Called by the brand mixin when the server sends its brand string. */
-    public static void onBrandReceived(mc.mod.serverscraper.data.ServerInfo info, String brand) {
+    public static void onBrandReceived(ServerInfo info, String brand) {
         info.serverBrand = brand != null ? brand : "vanilla";
         LOGGER.info("Server brand: {}", info.serverBrand);
 

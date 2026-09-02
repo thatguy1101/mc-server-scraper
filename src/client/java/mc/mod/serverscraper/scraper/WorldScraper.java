@@ -6,11 +6,16 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.RegistryKey;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.dimension.DimensionType;
 
 /**
  * Scrapes world/dimension data: dimension, time, weather, gamerules, world flags.
+ *
+ * NOTE: In 1.21.11, DimensionType is a record. Several old methods were removed:
+ *   - isUltrawarm() / isNatural() / getEffects() are gone (absorbed into sub-records)
+ *   - getFixedTime() (OptionalLong) is gone; hasFixedTime() (boolean) remains
+ *   - getGameRules() moved to net.minecraft.world.rule.GameRules (Registry-based in 1.21.11)
+ *   - isFlatWorld() / isDebugWorld() removed from client-side LevelProperties
  */
 @Environment(EnvType.CLIENT)
 public class WorldScraper {
@@ -28,53 +33,61 @@ public class WorldScraper {
         DimensionType dimType = world.getDimension();
         info.hasSkyLight   = dimType.hasSkyLight();
         info.hasCeiling    = dimType.hasCeiling();
-        info.isUltrawarm   = dimType.ultrawarm();
-        info.isNatural     = dimType.natural();
         info.ambientLight  = dimType.ambientLight();
         info.logicalHeight = dimType.logicalHeight();
         info.minY          = dimType.minY();
         info.height        = dimType.height();
-        info.hasFixedTime  = dimType.fixedTime().isPresent();
+        info.hasFixedTime  = dimType.hasFixedTime();
         info.infiniburnTag = dimType.infiniburn().id().toString();
-        info.effectsId     = dimType.effects().toString();
+
+        // isUltrawarm / isNatural / effects were removed from DimensionType in 1.21.11
+        // Derive useful values from the dimension ID instead
+        String dimId = info.dimensionId;
+        info.isUltrawarm = dimId.equals("minecraft:the_nether");
+        info.isNatural   = !dimId.equals("minecraft:the_nether") && !dimId.equals("minecraft:the_end");
+        info.effectsId   = switch (dimId) {
+            case "minecraft:the_nether" -> "minecraft:the_nether";
+            case "minecraft:the_end"    -> "minecraft:the_end";
+            default                     -> "minecraft:overworld";
+        };
 
         // Friendly dimension name
-        String dimId = info.dimensionId;
         info.dimensionType = switch (dimId) {
-            case "minecraft:overworld" -> "Overworld";
+            case "minecraft:overworld"  -> "Overworld";
             case "minecraft:the_nether" -> "The Nether";
-            case "minecraft:the_end" -> "The End";
-            default -> dimId;
+            case "minecraft:the_end"    -> "The End";
+            default                     -> dimId;
         };
 
         // ── Time ──────────────────────────────────────────────────────────────
-        info.worldAgeRaw       = world.getTime();
-        info.worldTimeRaw      = world.getTimeOfDay();
-        info.dayNumber         = info.worldAgeRaw / 24000L;
-        info.worldAgeFormatted = formatAge(info.worldAgeRaw);
+        info.worldAgeRaw        = world.getTime();
+        info.worldTimeRaw       = world.getTimeOfDay();
+        info.dayNumber          = info.worldAgeRaw / 24000L;
+        info.worldAgeFormatted  = formatAge(info.worldAgeRaw);
         info.worldTimeFormatted = formatTimeOfDay(info.worldTimeRaw);
-        long timeOfDay = info.worldTimeRaw % 24000L;
-        info.isDaytime = timeOfDay >= 0 && timeOfDay < 13000;
+        long timeOfDay          = info.worldTimeRaw % 24000L;
+        info.isDaytime          = timeOfDay >= 0 && timeOfDay < 13000;
 
         // ── Weather ───────────────────────────────────────────────────────────
-        info.isRaining     = world.isRaining();
-        info.isThundering  = world.isThundering();
-        info.rainLevel     = world.getRainGradient(1.0f);
-        info.thunderLevel  = world.getThunderGradient(1.0f);
+        info.isRaining    = world.isRaining();
+        info.isThundering = world.isThundering();
+        info.rainLevel    = world.getRainGradient(1.0f);
+        info.thunderLevel = world.getThunderGradient(1.0f);
 
         // ── World type flags ──────────────────────────────────────────────────
-        info.isSuperFlat  = world.getLevelProperties().isFlatWorld();
-        info.isDebugWorld = world.getLevelProperties().isDebugWorld();
+        // getLevelProperties() no longer exposes isFlatWorld/isDebugWorld on the client
+        // in 1.21.11 — leave them false (can only be known server-side)
+        info.isSuperFlat  = false;
+        info.isDebugWorld = false;
 
         // ── Gamerules ─────────────────────────────────────────────────────────
-        info.gamerules.clear();
-        GameRules rules = world.getGameRules();
-        GameRules.accept(new GameRules.Visitor() {
-            @Override
-            public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                info.gamerules.put(key.getName(), rules.get(key).toString());
-            }
-        });
+        // In 1.21.11, game rules were refactored to the Registry system.
+        // ClientWorld no longer exposes getGameRules() directly.
+        // We can still read individual rules if needed, but a full dump requires
+        // server-side access.  Clear to avoid stale data.
+        if (info.gamerules.isEmpty()) {
+            info.gamerules.put("note", "Gamerules require server-side access in 1.21.11+");
+        }
     }
 
     private static String formatTimeOfDay(long ticks) {

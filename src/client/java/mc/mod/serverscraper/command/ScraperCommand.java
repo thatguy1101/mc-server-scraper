@@ -1,9 +1,12 @@
 package mc.mod.serverscraper.command;
 
+import java.util.Map;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+
 import mc.mod.serverscraper.config.ScraperConfig;
 import mc.mod.serverscraper.data.ServerInfo;
 import mc.mod.serverscraper.export.DataExporter;
@@ -11,18 +14,12 @@ import mc.mod.serverscraper.scraper.MasterScraper;
 import mc.mod.serverscraper.scraper.NetworkScraper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-
-import java.util.Map;
-
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 /**
  * Registers /scraper and all its sub-commands.
@@ -188,8 +185,8 @@ public class ScraperCommand {
                 .append(Text.literal(path)
                     .styled(s -> s.withColor(Formatting.AQUA)
                         .withUnderline(true)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, path))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                        .withClickEvent(new net.minecraft.text.ClickEvent.OpenFile(path))
+                        .withHoverEvent(new net.minecraft.text.HoverEvent.ShowText(
                             Text.literal("Click to open file")))
                     )
                 );

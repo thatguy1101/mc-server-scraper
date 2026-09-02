@@ -1,5 +1,8 @@
 package mc.mod.serverscraper.hud;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import mc.mod.serverscraper.config.ScraperConfig;
 import mc.mod.serverscraper.data.ServerInfo;
 import mc.mod.serverscraper.scraper.MasterScraper;
@@ -10,10 +13,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.util.Formatting;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Renders the in-game HUD overlay.
@@ -47,55 +46,55 @@ public class ScraperHud {
         int screenW        = context.getScaledWindowWidth();
         int screenH        = context.getScaledWindowHeight();
 
-        // Calculate panel dimensions
+        float scale = cfg.hudScale;
+        int offsetX = cfg.hudOffsetX;
+        int offsetY = cfg.hudOffsetY;
+
+        // Measure panel in unscaled units, then multiply by scale for screen size
         int maxWidth = 0;
         for (HudLine l : lines) {
             int w = tr.getWidth(l.text);
             if (w > maxWidth) maxWidth = w;
         }
+        int panelW = maxWidth + 4;
+        int panelH = lines.size() * lineH + 2;
 
-        int panelW  = maxWidth + 4;
-        int panelH  = lines.size() * lineH + 2;
-        int offsetX = cfg.hudOffsetX;
-        int offsetY = cfg.hudOffsetY;
+        int scaledW = (int)(panelW * scale);
+        int scaledH = (int)(panelH * scale);
 
-        // Origin (top-left corner of the panel)
+        // Origin in actual screen pixels
         int ox, oy;
         switch (cfg.hudPosition.toUpperCase()) {
-            case "TOP_RIGHT"    -> { ox = screenW - panelW - offsetX; oy = offsetY; }
-            case "BOTTOM_LEFT"  -> { ox = offsetX;                    oy = screenH - panelH - offsetY; }
-            case "BOTTOM_RIGHT" -> { ox = screenW - panelW - offsetX; oy = screenH - panelH - offsetY; }
-            default             -> { ox = offsetX;                    oy = offsetY; } // TOP_LEFT
+            case "TOP_RIGHT"    -> { ox = screenW - scaledW - offsetX; oy = offsetY; }
+            case "BOTTOM_LEFT"  -> { ox = offsetX;                     oy = screenH - scaledH - offsetY; }
+            case "BOTTOM_RIGHT" -> { ox = screenW - scaledW - offsetX; oy = screenH - scaledH - offsetY; }
+            default             -> { ox = offsetX;                     oy = offsetY; }
         }
-
-        // ── Scale matrix ──────────────────────────────────────────────────────
-        float scale = cfg.hudScale;
-        context.getMatrices().push();
-        context.getMatrices().scale(scale, scale, 1.0f);
-        // Adjust origin for scale
-        ox = (int)(ox / scale);
-        oy = (int)(oy / scale);
 
         // ── Background ────────────────────────────────────────────────────────
         if (cfg.hudBackground) {
-            context.fill(ox - 1, oy - 1,
-                         ox + panelW + 1, oy + panelH + 1,
-                         cfg.hudBackgroundColor);
+            context.fill(ox - 1, oy - 1, ox + scaledW + 1, oy + scaledH + 1, cfg.hudBackgroundColor);
         }
 
-        // ── Text lines ────────────────────────────────────────────────────────
-        int y = oy + 1;
+        // ── Text — use org.joml.Matrix3x2fStack (what getMatrices() returns) ─
+        // Matrix3x2fStack uses pushMatrix() / popMatrix() and scale(sx, sy)
+        org.joml.Matrix3x2fStack mat = context.getMatrices();
+        mat.pushMatrix();
+        mat.translate(ox, oy);
+        mat.scale(scale, scale);
+
+        int y = 1;
         for (HudLine line : lines) {
             if (line.isSeparator) {
                 y += 2;
                 continue;
             }
             int color = line.color != 0 ? line.color : cfg.hudTextColor;
-            context.drawText(tr, line.text, ox + 2, y, color, cfg.hudBackground);
+            context.drawText(tr, line.text, 2, y, color, cfg.hudBackground);
             y += lineH;
         }
 
-        context.getMatrices().pop();
+        mat.popMatrix();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

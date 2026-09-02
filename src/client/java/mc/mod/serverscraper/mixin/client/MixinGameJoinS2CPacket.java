@@ -9,13 +9,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Intercepts the Game Join packet (sent once on join) to grab:
- * - server render distance
- * - simulation distance
- * - online mode flag
- * - reduced debug info flag
- * - respawn screen flag
- * - limited crafting flag
+ * Intercepts the Game Join packet to grab render/simulation distance and
+ * trigger the connect lifecycle.
  */
 @Mixin(ClientPlayNetworkHandler.class)
 public class MixinGameJoinS2CPacket {
@@ -25,9 +20,9 @@ public class MixinGameJoinS2CPacket {
         at = @At("TAIL")
     )
     private void serverscraper$onGameJoin(GameJoinS2CPacket packet, CallbackInfo ci) {
-        MasterScraper.INFO.serverRenderDistance  = packet.chunkLoadDistance();
-        MasterScraper.INFO.simulationDistance    = packet.simulationDistance();
-        // Trigger a full connect lifecycle
+        // In 1.21.1 the accessor is viewDistance() (was chunkLoadDistance())
+        MasterScraper.INFO.serverRenderDistance = packet.viewDistance();
+        MasterScraper.INFO.simulationDistance   = packet.simulationDistance();
         MasterScraper.onConnect();
     }
 }

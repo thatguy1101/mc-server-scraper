@@ -1,15 +1,18 @@
 package mc.mod.serverscraper.scraper;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import mc.mod.serverscraper.data.ServerInfo;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.scoreboard.*;
-import net.minecraft.world.GameRules;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.ScoreboardDisplaySlot;
+import net.minecraft.scoreboard.ScoreboardEntry;
+import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.scoreboard.Team;
 
 /**
  * Reads the sidebar scoreboard currently displayed to the player.
@@ -23,7 +26,7 @@ public class ScoreboardScraper {
 
         Scoreboard scoreboard = mc.world.getScoreboard();
 
-        // Get the sidebar objective (slot 1 = sidebar)
+        // Get the sidebar objective (slot SIDEBAR)
         ScoreboardObjective sidebar = scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.SIDEBAR);
         if (sidebar == null) {
             info.scoreboardTitle = "N/A";
@@ -40,7 +43,8 @@ public class ScoreboardScraper {
                 .sorted((a, b) -> Integer.compare(b.value(), a.value()))
                 .limit(15)
                 .forEach(score -> {
-                    Team team = scoreboard.getPlayerTeam(score.owner());
+                    // In 1.21.11, getPlayerTeam() is now getScoreHolderTeam()
+                    Team team = scoreboard.getScoreHolderTeam(score.owner());
                     String display = team != null
                             ? Team.decorateName(team, net.minecraft.text.Text.literal(score.owner())).getString()
                             : score.owner();

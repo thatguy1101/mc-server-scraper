@@ -18,16 +18,16 @@ public class MixinTitleS2CPacket {
 
     @Inject(method = "onTitle",    at = @At("HEAD"))
     private void serverscraper$onTitle(TitleS2CPacket packet, CallbackInfo ci) {
-        MasterScraper.INFO.lastTitle = packet.title().getString();
+        MasterScraper.INFO.lastTitle = packet.text().getString();
     }
 
     @Inject(method = "onSubtitle", at = @At("HEAD"))
     private void serverscraper$onSubtitle(SubtitleS2CPacket packet, CallbackInfo ci) {
-        MasterScraper.INFO.lastSubtitle = packet.subtitle().getString();
+        MasterScraper.INFO.lastSubtitle = packet.text().getString();
     }
 
     @Inject(method = "onOverlayMessage", at = @At("HEAD"))
     private void serverscraper$onActionBar(OverlayMessageS2CPacket packet, CallbackInfo ci) {
-        MasterScraper.INFO.lastActionBar = packet.message().getString();
+        MasterScraper.INFO.lastActionBar = packet.text().getString();
     }
 }

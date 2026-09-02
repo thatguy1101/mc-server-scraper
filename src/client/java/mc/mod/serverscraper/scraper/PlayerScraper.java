@@ -1,5 +1,7 @@
 package mc.mod.serverscraper.scraper;
 
+import java.util.Collection;
+
 import mc.mod.serverscraper.data.ServerInfo;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -10,9 +12,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.world.GameMode;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * Scrapes the local player's stats and the full tab-list player roster.
@@ -56,8 +55,8 @@ public class PlayerScraper {
         info.localPlayerRegionZ = info.localPlayerChunkZ >> 5;
 
         // ── Movement state ────────────────────────────────────────────────────
-        info.localPlayerFlying   = player.getAbilities().flying;
-        info.localPlayerSneaking = player.isSneaking();
+        info.localPlayerFlying    = player.getAbilities().flying;
+        info.localPlayerSneaking  = player.isSneaking();
         info.localPlayerSprinting = player.isSprinting();
         info.localPlayerOnGround  = player.isOnGround();
         info.localPlayerInWater   = player.isTouchingWater();
@@ -71,20 +70,22 @@ public class PlayerScraper {
         // ── Gamemode & permissions ────────────────────────────────────────────
         if (mc.interactionManager != null) {
             GameMode gm = mc.interactionManager.getCurrentGameMode();
-            info.localPlayerGamemode  = gm.getName();
+            // In 1.21.1, GameMode#asString() replaces the old getName()
+            info.localPlayerGamemode  = gm.asString();
             info.localPlayerCreative  = gm == GameMode.CREATIVE;
             info.localPlayerSpectator = gm == GameMode.SPECTATOR;
             info.localPlayerSurvival  = gm == GameMode.SURVIVAL;
             info.localPlayerAdventure = gm == GameMode.ADVENTURE;
         }
 
-        info.localPlayerOp       = player.getAbilities().allowModifyWorld;
+        info.localPlayerOp        = player.getAbilities().allowModifyWorld;
         info.localPlayerPermLevel = player.getAbilities().allowModifyWorld ? 4 : 0;
 
         // ── Scoreboard team ───────────────────────────────────────────────────
         if (mc.world != null) {
             Scoreboard sb = mc.world.getScoreboard();
-            Team team = sb.getPlayerTeam(info.localPlayerName);
+            // In 1.21.11, getPlayerTeam() was renamed to getScoreHolderTeam()
+            Team team = sb.getScoreHolderTeam(info.localPlayerName);
             info.localPlayerTeam = team != null ? team.getName() : "N/A";
             info.localPlayerScoreboardName = info.localPlayerName;
         }
@@ -94,24 +95,26 @@ public class PlayerScraper {
         if (handler == null) return;
 
         Collection<PlayerListEntry> entries = handler.getPlayerList();
-        info.playerCount    = entries.size();
-        info.maxPlayerCount = handler.getPlayerList().size(); // max comes from server
+        info.playerCount = entries.size();
 
         info.onlinePlayers.clear();
         for (PlayerListEntry entry : entries) {
-            String name = entry.getProfile().getName();
+            // In authlib used by 1.21.11: GameProfile uses .name() and .id() (not getName/getId)
+            com.mojang.authlib.GameProfile profile = entry.getProfile();
+            String name    = profile.name();
             String display = entry.getDisplayName() != null
                     ? entry.getDisplayName().getString()
                     : name;
+            // GameMode#asString() replaces old getName()
             String gamemode = entry.getGameMode() != null
-                    ? entry.getGameMode().getName()
+                    ? entry.getGameMode().asString()
                     : "unknown";
             Team team = entry.getScoreboardTeam();
             String teamName = team != null ? team.getName() : "";
 
             info.onlinePlayers.add(new ServerInfo.PlayerEntry(
                     name,
-                    entry.getProfile().getId(),
+                    profile.id(),
                     entry.getLatency(),
                     gamemode,
                     display,
