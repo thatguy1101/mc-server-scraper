@@ -11,23 +11,23 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Captures titles, subtitles, and action bar messages sent by the server.
+ * Captures title, subtitle, and action bar text from the server.
  */
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(value = ClientPlayNetworkHandler.class, priority = 900)
 public class MixinTitleS2CPacket {
 
-    @Inject(method = "onTitle",    at = @At("HEAD"))
+    @Inject(method = "onTitle", at = @At("HEAD"), require = 0)
     private void serverscraper$onTitle(TitleS2CPacket packet, CallbackInfo ci) {
-        MasterScraper.INFO.lastTitle = packet.text().getString();
+        try { MasterScraper.INFO.lastTitle = packet.text().getString(); } catch (Exception ignored) {}
     }
 
-    @Inject(method = "onSubtitle", at = @At("HEAD"))
+    @Inject(method = "onSubtitle", at = @At("HEAD"), require = 0)
     private void serverscraper$onSubtitle(SubtitleS2CPacket packet, CallbackInfo ci) {
-        MasterScraper.INFO.lastSubtitle = packet.text().getString();
+        try { MasterScraper.INFO.lastSubtitle = packet.text().getString(); } catch (Exception ignored) {}
     }
 
-    @Inject(method = "onOverlayMessage", at = @At("HEAD"))
+    @Inject(method = "onOverlayMessage", at = @At("HEAD"), require = 0)
     private void serverscraper$onActionBar(OverlayMessageS2CPacket packet, CallbackInfo ci) {
-        MasterScraper.INFO.lastActionBar = packet.text().getString();
+        try { MasterScraper.INFO.lastActionBar = packet.text().getString(); } catch (Exception ignored) {}
     }
 }

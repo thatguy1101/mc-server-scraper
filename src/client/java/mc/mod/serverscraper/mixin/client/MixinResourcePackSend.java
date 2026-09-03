@@ -11,13 +11,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Records server-sent resource pack URLs/hashes for inspection.
  */
-@Mixin(ClientCommonNetworkHandler.class)
+@Mixin(value = ClientCommonNetworkHandler.class, priority = 900)
 public class MixinResourcePackSend {
 
-    @Inject(
-        method = "onResourcePackSend",
-        at = @At("HEAD")
-    )
+    @Inject(method = "onResourcePackSend", at = @At("HEAD"), require = 0)
     private void serverscraper$onResourcePack(ResourcePackSendS2CPacket packet, CallbackInfo ci) {
         String entry = packet.url() + "  [" + packet.hash() + "]"
                 + (packet.required() ? "  (required)" : "  (optional)");

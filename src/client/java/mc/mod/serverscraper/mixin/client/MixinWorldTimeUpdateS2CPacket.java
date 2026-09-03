@@ -12,13 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Intercepts every WorldTimeUpdateS2CPacket so TpsTracker can timestamp them
  * and compute a real TPS estimate. The server sends this once per game tick.
  */
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(value = ClientPlayNetworkHandler.class, priority = 900)
 public class MixinWorldTimeUpdateS2CPacket {
 
-    @Inject(
-        method = "onWorldTimeUpdate",
-        at = @At("HEAD")
-    )
+    @Inject(method = "onWorldTimeUpdate", at = @At("HEAD"), require = 0)
     private void serverscraper$onTimeUpdate(WorldTimeUpdateS2CPacket packet, CallbackInfo ci) {
         TpsTracker.onTimePacket();
     }

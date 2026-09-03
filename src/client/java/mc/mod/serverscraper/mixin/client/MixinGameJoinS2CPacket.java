@@ -12,13 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Intercepts the Game Join packet to grab render/simulation distance and
  * trigger the connect lifecycle.
  */
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(value = ClientPlayNetworkHandler.class, priority = 900)
 public class MixinGameJoinS2CPacket {
 
-    @Inject(
-        method = "onGameJoin",
-        at = @At("TAIL")
-    )
+    @Inject(method = "onGameJoin", at = @At("TAIL"), require = 0)
     private void serverscraper$onGameJoin(GameJoinS2CPacket packet, CallbackInfo ci) {
         // In 1.21.1 the accessor is viewDistance() (was chunkLoadDistance())
         MasterScraper.INFO.serverRenderDistance = packet.viewDistance();

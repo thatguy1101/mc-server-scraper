@@ -12,15 +12,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * When the player respawns / changes dimension, re-trigger a scrape refresh
  * so dimension info and world flags stay current.
  */
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(value = ClientPlayNetworkHandler.class, priority = 900)
 public class MixinPlayerRespawn {
 
-    @Inject(
-        method = "onPlayerRespawn",
-        at = @At("TAIL")
-    )
+    @Inject(method = "onPlayerRespawn", at = @At("TAIL"), require = 0)
     private void serverscraper$onRespawn(PlayerRespawnS2CPacket packet, CallbackInfo ci) {
-        // schedule a refresh on the next tick rather than doing it mid-packet-handling
         MasterScraper.INFO.dimensionId = packet.commonPlayerSpawnInfo().dimension().getValue().toString();
     }
 }

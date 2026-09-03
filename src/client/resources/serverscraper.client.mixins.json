@@ -8,12 +8,11 @@
     "MixinClientBrandCustomPayload",
     "MixinClientConnection",
     "MixinGameJoinS2CPacket",
-    "MixinDisconnect",
     "MixinTitleS2CPacket",
     "MixinResourcePackSend",
     "MixinPlayerRespawn"
   ],
   "injectors": {
-    "defaultRequire": 1
+    "defaultRequire": 0
   }
 }
